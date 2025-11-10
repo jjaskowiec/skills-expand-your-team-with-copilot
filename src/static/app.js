@@ -527,6 +527,25 @@ document.addEventListener("DOMContentLoaded", () => {
         <strong>Schedule:</strong> ${formattedSchedule}
         <span class="tooltip-text">Regular meetings at this time throughout the semester</span>
       </p>
+      <div class="social-share-container">
+        <span class="share-label">Share:</span>
+        <button class="share-button facebook tooltip" data-activity="${name}" data-platform="facebook" title="Share on Facebook" aria-label="Share on Facebook">
+          📘
+          <span class="tooltip-text">Share on Facebook</span>
+        </button>
+        <button class="share-button twitter tooltip" data-activity="${name}" data-platform="twitter" title="Share on Twitter" aria-label="Share on Twitter">
+          🐦
+          <span class="tooltip-text">Share on Twitter</span>
+        </button>
+        <button class="share-button email tooltip" data-activity="${name}" data-platform="email" title="Share via Email" aria-label="Share via Email">
+          ✉️
+          <span class="tooltip-text">Share via Email</span>
+        </button>
+        <button class="share-button copy tooltip" data-activity="${name}" data-platform="copy" title="Copy Link" aria-label="Copy Link">
+          🔗
+          <span class="tooltip-text">Copy Link</span>
+        </button>
+      </div>
       ${capacityIndicator}
       <div class="participants-list">
         <h5>Current Participants:</h5>
@@ -586,6 +605,14 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
     }
+
+    // Add click handlers for share buttons
+    const shareButtons = activityCard.querySelectorAll(".share-button");
+    shareButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        handleShare(name, details, button.dataset.platform, button);
+      });
+    });
 
     activitiesList.appendChild(activityCard);
   }
@@ -854,6 +881,66 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Error signing up:", error);
     }
   });
+
+  // Handle social sharing
+  function handleShare(activityName, details, platform, button) {
+    const baseUrl = window.location.origin + window.location.pathname;
+    const activityUrl = `${baseUrl}#${encodeURIComponent(activityName)}`;
+    const shareText = `Check out ${activityName} at Mergington High School! ${details.description}`;
+    const shareTitle = `${activityName} - Mergington High School Activities`;
+
+    switch (platform) {
+      case "facebook":
+        // Facebook share dialog
+        const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+          activityUrl
+        )}`;
+        window.open(facebookUrl, "_blank", "width=600,height=400");
+        break;
+
+      case "twitter":
+        // Twitter share
+        const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+          shareText
+        )}&url=${encodeURIComponent(activityUrl)}`;
+        window.open(twitterUrl, "_blank", "width=600,height=400");
+        break;
+
+      case "email":
+        // Email share
+        const emailSubject = encodeURIComponent(shareTitle);
+        const emailBody = encodeURIComponent(
+          `${shareText}\n\nSchedule: ${formatSchedule(
+            details
+          )}\n\nView more details: ${activityUrl}`
+        );
+        window.location.href = `mailto:?subject=${emailSubject}&body=${emailBody}`;
+        break;
+
+      case "copy":
+        // Copy link to clipboard
+        navigator.clipboard
+          .writeText(activityUrl)
+          .then(() => {
+            // Visual feedback
+            const originalEmoji = button.textContent;
+            button.textContent = "✓";
+            button.classList.add("copied");
+
+            setTimeout(() => {
+              button.textContent = originalEmoji;
+              button.classList.remove("copied");
+            }, 2000);
+
+            showMessage("Link copied to clipboard!", "success");
+          })
+          .catch((err) => {
+            console.error("Failed to copy link:", err);
+            showMessage("Failed to copy link", "error");
+          });
+        break;
+    }
+  }
 
   // Expose filter functions to window for future UI control
   window.activityFilters = {
